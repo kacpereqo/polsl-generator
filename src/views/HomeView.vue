@@ -6,7 +6,7 @@
       <img
         v-show="imageElement !== null"
         id="watermark"
-        src="/public/watermark.png"
+        src="/watermark.png"
         ref="watermarkElement"
       />
     </div>
@@ -96,7 +96,7 @@ function loadImage() {
 }
 
 onMounted(() => {
-  imageElement.value.src = '/public/placeholder.png'
+  imageElement.value.src = '/placeholder.png'
 })
 </script>
 
@@ -131,8 +131,8 @@ onMounted(() => {
 
 #watermark {
   position: absolute;
-  bottom: 0;
-  left: 0;
+  bottom: 10px;
+  left: 10px;
   z-index: 1;
   width: 300px;
 }

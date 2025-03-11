@@ -1,18 +1,21 @@
 <template>
-  <div class="home-container">
-    <input @input="loadImage" type="file" id="img" name="img" accept="image/*" ref="imageInput" />
-    <div class="image-container">
-      <img ref="imageElement" id="main-image" />
-      <img
-        v-show="imageElement !== null"
-        id="watermark"
-        src="/watermark.png"
-        ref="watermarkElement"
-      />
+  <div class="home-container" @paste="pasteHandler">
+    <div class="input" @drop="loadImage">
+      <input type="file" ref="imageInput" @change="loadImage" accept="image" />
+      <p>Drop or paste image here</p>
     </div>
-    <div class="export-buttons">
-      <button @click="exportImage">Export</button>
-      <button @click="exportImageToClipboard">Copy to clipboard</button>
+    <div v-show="isLoaded" class="on-load">
+      <hr />
+      <div class="preview">
+        <div class="image">
+          <img ref="imageElement" />
+          <img ref="watermarkElement" class="watermark" src="/watermark.png" />
+        </div>
+      </div>
+      <div class="export">
+        <button @click="exportImageToClipboard">Copy to clipboard</button>
+        <button @click="exportImage">Download</button>
+      </div>
     </div>
   </div>
 </template>
@@ -20,7 +23,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-const imageInput = ref<File[] | null>(null)
+const imageInput = ref<HTMLInputElement | null>(null)
 const imageElement = ref<HTMLImageElement | null>(null)
 const watermarkElement = ref<HTMLImageElement | null>(null)
 const isLoaded = ref(false)
@@ -66,6 +69,32 @@ function createCanvasImage(callback: (canvas: HTMLCanvasElement) => void) {
   return canvas
 }
 
+function pasteHandler(event: ClipboardEvent) {
+  const items = event.clipboardData?.items
+  if (!items) return
+
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      const blob = items[i].getAsFile()
+      if (!blob) return
+
+      const url = URL.createObjectURL(blob)
+      imageElement.value.src = url
+
+      const name = blob.name
+      const type = blob.type
+
+      const list = new DataTransfer()
+      list.items.add(new File([blob], name, { type }))
+      imageInput.value.files = list.files
+
+      isLoaded.value = true
+
+      // set imageInput to
+    }
+  }
+}
+
 function exportImageToClipboard() {
   createCanvasImage((canvas) => {
     if (!canvas) return
@@ -87,16 +116,17 @@ function exportImage() {
 
 function loadImage() {
   if (!imageInput.value) return
-  if (!imageElement.value) return
 
   isLoaded.value = true
   const imageFile = imageInput.value.files[0]
 
   imageElement.value.src = URL.createObjectURL(imageFile)
+
+  // set watermark margin to width 50% - image
 }
 
 onMounted(() => {
-  imageElement.value.src = '/placeholder.png'
+  // imageElement.value.src = '/placeholder.png'
 })
 </script>
 
@@ -111,34 +141,77 @@ onMounted(() => {
   gap: 1rem;
   padding: 1rem;
 }
-.image-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  position: relative;
-}
 
-.export-buttons {
+.input {
   display: flex;
-  flex-direction: row;
-  width: 100%;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
 
-.export-buttons button {
+.on-load {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.export {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.export button {
+  padding: 0.5rem 1rem;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
   flex: 1;
 }
 
-#watermark {
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.image {
+  position: relative;
+}
+
+.image img {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #333;
+  color: #333;
+  overflow: visible;
+  text-align: center;
+  height: 5px;
+  width: 100%;
+}
+
+hr::after {
+  content: 'Preview';
+  display: inline-block;
+  position: relative;
+  top: -0.7em;
+  padding: 0 0.25em;
+  background: #fff;
+}
+
+.watermark {
   position: absolute;
   bottom: 10px;
   left: 10px;
+  max-width: 200px;
   z-index: 1;
-  width: 300px;
-}
-
-#main-image {
-  width: 100%;
-  height: 100%;
 }
 </style>

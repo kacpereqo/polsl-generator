@@ -1,8 +1,16 @@
 <template>
-  <div class="home-container" @paste="pasteHandler">
-    <div class="input" @drop="loadImage">
+  <div
+    class="home-container"
+    @paste="pasteHandler"
+    @drop.prevent="dropHandler"
+    @dragenter.prevent="dragenterHandler"
+    @dragover.prevent="dragoverHandler"
+    @dragleave.prevent="dragleaveHandler"
+  >
+    <div class="input">
       <input type="file" ref="imageInput" @change="loadImage" accept="image" />
-      <p>Drop or paste image here</p>
+      <p v-show="!isDragging">Drop or paste image here</p>
+      <p v-show="isDragging">Drop!!!!</p>
     </div>
     <div v-show="isLoaded" class="on-load">
       <hr />
@@ -27,6 +35,20 @@ const imageInput = ref<HTMLInputElement | null>(null)
 const imageElement = ref<HTMLImageElement | null>(null)
 const watermarkElement = ref<HTMLImageElement | null>(null)
 const isLoaded = ref(false)
+
+const isDragging = ref(false)
+
+function dragenterHandler() {
+  isDragging.value = true
+}
+
+function dragoverHandler() {
+  isDragging.value = true
+}
+
+function dragleaveHandler() {
+  isDragging.value = false
+}
 
 function createCanvasImage(callback: (canvas: HTMLCanvasElement) => void) {
   console.log('exporting image')
@@ -67,6 +89,20 @@ function createCanvasImage(callback: (canvas: HTMLCanvasElement) => void) {
   watermark.src = watermarkElement.value?.src
 
   return canvas
+}
+
+function dropHandler(event: DragEvent) {
+  event.preventDefault()
+
+  if (!event.dataTransfer) return
+
+  const files = event.dataTransfer.files
+  if (!files.length) return
+
+  imageInput.value.files = files
+  loadImage()
+
+  isDragging.value = false
 }
 
 function pasteHandler(event: ClipboardEvent) {
@@ -126,7 +162,10 @@ function loadImage() {
 }
 
 onMounted(() => {
-  // imageElement.value.src = '/placeholder.png'
+  const events = ['dragenter', 'dragover', 'dragleave', 'drop']
+  events.forEach((eventName) => {
+    document.body.addEventListener(eventName, (e) => e.preventDefault())
+  })
 })
 </script>
 

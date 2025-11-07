@@ -83,9 +83,11 @@ function createCanvasImage(callback: (canvas: HTMLCanvasElement) => void) {
   }
 
   watermark.onload = () => {
+    if (!imageElement.value) return
     image.src = imageElement.value.src
   }
 
+  if (!watermarkElement.value) return
   watermark.src = watermarkElement.value?.src
 
   return canvas
@@ -99,6 +101,7 @@ function dropHandler(event: DragEvent) {
   const files = event.dataTransfer.files
   if (!files.length) return
 
+  if (!imageInput.value) return
   imageInput.value.files = files
   loadImage()
 
@@ -115,6 +118,7 @@ function pasteHandler(event: ClipboardEvent) {
       if (!blob) return
 
       const url = URL.createObjectURL(blob)
+      if (!imageElement.value) return
       imageElement.value.src = url
 
       const name = blob.name
@@ -122,6 +126,7 @@ function pasteHandler(event: ClipboardEvent) {
 
       const list = new DataTransfer()
       list.items.add(new File([blob], name, { type }))
+      if (!imageInput.value) return
       imageInput.value.files = list.files
 
       isLoaded.value = true
@@ -135,6 +140,7 @@ function exportImageToClipboard() {
   createCanvasImage((canvas) => {
     if (!canvas) return
     canvas.toBlob((blob) => {
+      if (!blob) return
       const item = new ClipboardItem({ 'image/png': blob })
       navigator.clipboard.write([item])
     })
@@ -154,8 +160,10 @@ function loadImage() {
   if (!imageInput.value) return
 
   isLoaded.value = true
+  if (!imageInput.value.files) return
   const imageFile = imageInput.value.files[0]
 
+  if (!imageElement.value) return
   imageElement.value.src = URL.createObjectURL(imageFile)
 
   // set watermark margin to width 50% - image
